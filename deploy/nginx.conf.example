@@ -1,0 +1,21 @@
+# Example nginx reverse-proxy config. Add TLS with certbot afterwards.
+server {
+    listen 80;
+    server_name apk.example.com;
+
+    # APK uploads can be large; match (or exceed) MAX_UPLOAD_MB in the app.
+    client_max_body_size 200M;
+
+    location / {
+        proxy_pass http://127.0.0.1:5003;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Signing a large APK can take a while; allow a long upstream read.
+        # Keep request buffering ON (the default) so nginx absorbs slow client
+        # uploads itself — sync gunicorn workers must not read slow bodies.
+        proxy_read_timeout 180s;
+    }
+}

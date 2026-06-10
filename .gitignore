@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Runtime data — uploads, jobs, and the generated signing keystore
+storage/
+*.keystore
+*.jks
+
+# Local / editor
+.env
+.DS_Store
+*.log
+tmp/

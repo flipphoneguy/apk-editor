@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <title>APK Editor — flipphoneguy</title>
+  <script>
+    (function () {
+      var t = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <style>
+    :root {
+      --accent:#4f8ef7; --accent-dim:rgba(79,142,247,.15); --accent-dimmer:rgba(79,142,247,.07);
+      --bg:#f8f9fb; --bg-subtle:#eef0f4; --bg-card:#fff; --border:#e2e5ea;
+      --text:#0f1117; --text-muted:#6b7280; --text-faint:#b0b8c4; --code-bg:#f1f3f6;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+      --shadow:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);
+      --danger:#ef4444; --success:#10b981; --warn:#f59e0b; --radius:10px;
+    }
+    [data-theme="dark"] {
+      --accent:#5b9cf6; --accent-dim:rgba(91,156,246,.18); --accent-dimmer:rgba(91,156,246,.08);
+      --bg:#0b0d12; --bg-subtle:#13161e; --bg-card:#181c27; --border:#232838;
+      --text:#e6eaf4; --text-muted:#7a8499; --text-faint:#323848; --code-bg:#161922;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.4); --shadow:0 4px 16px rgba(0,0,0,.4);
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Plus Jakarta Sans',system-ui,sans-serif; background:var(--bg); color:var(--text);
+      min-height:100vh; display:flex; flex-direction:column; font-size:16px; line-height:1.7; -webkit-font-smoothing:antialiased; }
+    header { position:sticky; top:0; z-index:50; height:58px; padding:0 2rem; gap:1rem; display:flex; align-items:center; justify-content:space-between;
+      background:color-mix(in srgb,var(--bg) 85%,transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
+    .brand { display:flex; align-items:center; gap:.55rem; text-decoration:none; color:var(--text); font-weight:700; font-size:.9rem; }
+    .brand .dim { color:var(--text-faint); font-weight:600; }
+    .header-nav { display:flex; align-items:center; gap:.4rem; }
+    .header-nav a { font-size:.83rem; font-weight:500; color:var(--text-muted); text-decoration:none; padding:.3rem .6rem; border-radius:6px; transition:.15s; }
+    .header-nav a:hover { color:var(--text); background:var(--bg-subtle); }
+    .theme-btn { width:34px; height:34px; border:1px solid var(--border); border-radius:8px; background:var(--bg-subtle); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-muted); transition:.15s; }
+    .theme-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .theme-btn svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .icon-sun{display:none;} [data-theme="dark"] .icon-sun{display:block;} [data-theme="dark"] .icon-moon{display:none;}
+    main { flex:1; width:100%; max-width:720px; margin:0 auto; padding:2.5rem 2rem 7rem; }
+    .title { font-size:1.6rem; font-weight:700; letter-spacing:-.03em; margin-bottom:.4rem; }
+    .title .fn { color:var(--accent); }
+    .subtitle { color:var(--text-muted); font-size:.92rem; margin-bottom:2rem; }
+
+    /* Dropzone */
+    #dropzone { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.3rem;
+      padding:3rem 1.5rem; border:2px dashed var(--border); border-radius:14px; background:var(--bg-card);
+      cursor:pointer; text-align:center; transition:border-color .15s,background .15s; }
+    #dropzone:hover, #dropzone.drag { border-color:var(--accent); background:var(--accent-dimmer); }
+    .dz-icon { font-size:1.8rem; }
+    .dz-main { font-weight:700; font-size:1rem; }
+    .dz-sub { font-size:.8rem; color:var(--text-faint); }
+    .howto { display:flex; align-items:center; justify-content:center; gap:.6rem; margin:1.4rem 0 1.6rem; color:var(--text-muted); font-size:.82rem; font-weight:600; }
+    .howto span:nth-child(even){ color:var(--text-faint); font-weight:400; }
+    .blurb { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem 1.25rem; font-size:.84rem; color:var(--text-muted); }
+    .blurb p { margin-bottom:.6rem; }
+    .blurb p:last-child { margin-bottom:0; }
+    .blurb b { color:var(--text); font-weight:700; }
+    .blurb .priv { font-size:.8rem; color:var(--text-faint); border-top:1px solid var(--border); padding-top:.6rem; margin-top:.2rem; }
+    .source-link { text-align:center; margin-top:1.4rem; }
+    .source-link a { font-size:.82rem; font-weight:600; color:var(--text-muted); text-decoration:none; transition:color .15s; }
+    .source-link a:hover { color:var(--accent); }
+
+    /* Sections */
+    details.section { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:.7rem; box-shadow:var(--shadow-sm); overflow:hidden; }
+    details.section > summary { list-style:none; cursor:pointer; user-select:none; padding:.95rem 1.15rem; font-weight:700; font-size:.95rem; display:flex; align-items:center; gap:.6rem; }
+    details.section > summary::-webkit-details-marker { display:none; }
+    details.section > summary::before { content:"\25B6"; font-size:.6rem; color:var(--text-muted); transition:transform .2s; }
+    details.section[open] > summary::before { transform:rotate(90deg); }
+    summary .badge { margin-left:auto; font-size:.72rem; font-weight:700; color:var(--accent); background:var(--accent-dimmer); padding:.12em .55em; border-radius:20px; }
+    .section-body { padding:.3rem 1.15rem 1.15rem; }
+
+    /* Fields */
+    .field { margin-bottom:.95rem; }
+    .field:last-child { margin-bottom:.2rem; }
+    .field > label { display:flex; align-items:center; gap:.35rem; font-size:.8rem; font-weight:600; color:var(--text-muted); margin-bottom:.32rem; }
+    .field input[type=text], .field input[type=number], .field input[type=password], .field select {
+      width:100%; padding:.55rem .7rem; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text);
+      font-size:.88rem; font-family:inherit; outline:none; transition:border-color .15s,box-shadow .15s; }
+    .field input:focus, .field select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+    .field input:disabled { opacity:.55; cursor:not-allowed; }
+    .field input.invalid { border-color:var(--danger); box-shadow:0 0 0 3px rgba(239,68,68,.15); }
+    .field .note { font-size:.74rem; color:var(--text-faint); margin-top:.3rem; }
+    .field .err { font-size:.75rem; color:var(--danger); font-weight:600; margin-top:.3rem; display:none; }
+    .field .err.show { display:block; }
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+
+    /* Tooltip (?) */
+    .help { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%;
+      border:1px solid var(--text-faint); color:var(--text-faint); font-size:.64rem; font-weight:700; cursor:pointer; flex-shrink:0; user-select:none; }
+    .help:hover { border-color:var(--accent); color:var(--accent); }
+    #tip { position:absolute; z-index:200; display:none; max-width:280px; background:var(--bg-card); color:var(--text);
+      border:1px solid var(--border); border-radius:8px; padding:.6rem .75rem; font-size:.78rem; font-weight:400; line-height:1.5; box-shadow:var(--shadow); }
+
+    /* Checkbox rows (flags + activity controls) */
+    .checkrow { display:flex; align-items:center; gap:.55rem; padding:.45rem 0; font-size:.86rem; }
+    .checkrow input[type=checkbox] { width:17px; height:17px; accent-color:var(--accent); flex-shrink:0; cursor:pointer; }
+    .checkrow .cname { font-weight:600; }
+    .checkrow .help { margin-left:auto; }
+
+    /* Permission / activity rows */
+    .list { display:flex; flex-direction:column; gap:.4rem; }
+    .lrow { display:flex; align-items:center; gap:.6rem; padding:.5rem .7rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; font-size:.83rem; }
+    .lrow .lname { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'SF Mono','Fira Code',monospace; font-size:.8rem; }
+    .icon-btn { border:none; background:none; cursor:pointer; color:var(--text-faint); font-size:.95rem; padding:.15rem .3rem; border-radius:5px; transition:.15s; }
+    .icon-btn:hover { color:var(--danger); background:var(--accent-dimmer); }
+    .act { display:flex; flex-direction:column; gap:.35rem; padding:.6rem .7rem; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+    .act-top { display:flex; align-items:center; gap:.5rem; }
+    .act-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'SF Mono','Fira Code',monospace; font-size:.78rem; }
+    .act-ctrls { display:flex; flex-wrap:wrap; align-items:center; gap:1.1rem; font-size:.8rem; color:var(--text-muted); padding-left:.1rem; }
+    .act-ctrls label { display:flex; align-items:center; gap:.4rem; cursor:pointer; }
+    .act-ctrls input[type=checkbox] { width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+    .pill { font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--success); background:rgba(16,185,129,.12); padding:.12em .5em; border-radius:20px; }
+    .add-row { display:flex; gap:.5rem; margin-top:.6rem; }
+    .add-row input { flex:1; }
+    .hint { font-size:.78rem; color:var(--text-muted); background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:.55rem .7rem; margin-bottom:.7rem; }
+    .hint b { color:var(--text); }
+
+    /* Buttons */
+    .btn { font-family:inherit; font-size:.86rem; font-weight:600; padding:.6rem 1.1rem; border-radius:8px; border:1px solid var(--border);
+      background:var(--bg-card); color:var(--text); cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; transition:.15s; }
+    .btn:hover { border-color:var(--accent); }
+    .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .btn.primary:hover { filter:brightness(1.08); }
+    .btn.ghost { background:none; color:var(--text-muted); }
+    .btn[disabled] { opacity:.5; cursor:not-allowed; }
+    .small-add { padding:.55rem .8rem; font-size:.8rem; }
+
+    .actionbar { position:sticky; bottom:0; display:flex; gap:.6rem; padding:1rem 0; margin-top:1.2rem;
+      background:linear-gradient(to top,var(--bg) 70%,transparent); }
+    .actionbar .btn.primary { flex:1; }
+
+    /* Result */
+    .result-card { text-align:center; background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:2.5rem 1.5rem; box-shadow:var(--shadow); }
+    .result-card .check { width:56px; height:56px; margin:0 auto 1rem; border-radius:50%; background:rgba(16,185,129,.14); color:var(--success); font-size:1.8rem; display:flex; align-items:center; justify-content:center; }
+    .result-card h2 { font-size:1.3rem; font-weight:700; margin-bottom:.4rem; }
+    .result-card h2 .elapsed { font-size:.8rem; font-weight:600; color:var(--text-faint); }
+    .result-card .rname { font-family:'SF Mono','Fira Code',monospace; font-size:.82rem; color:var(--text-muted); word-break:break-all; margin-bottom:.3rem; }
+    .result-card .verified { font-size:.78rem; color:var(--success); margin-bottom:1.4rem; }
+    .result-actions { display:flex; flex-direction:column; gap:.6rem; max-width:280px; margin:0 auto; }
+    .result-card .priv { font-size:.75rem; color:var(--text-faint); margin-top:1rem; }
+
+    /* Warnings / errors */
+    .warnbox { text-align:left; background:rgba(245,158,11,.08); border:1px solid var(--warn); border-radius:8px; padding:.7rem .9rem; margin-bottom:1.2rem; font-size:.8rem; color:var(--text); }
+    .warnbox b { color:var(--warn); }
+    .warnbox ul { margin:.3rem 0 0 1.1rem; }
+    #banner { display:none; background:rgba(239,68,68,.1); border:1px solid var(--danger); color:var(--text); padding:.7rem 1rem; border-radius:8px; font-size:.85rem; font-weight:600; margin-bottom:1.2rem; }
+    #banner.show { display:block; }
+
+    /* Loading overlay */
+    #overlay { position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; flex-direction:column; gap:1rem;
+      background:color-mix(in srgb,var(--bg) 80%,transparent); backdrop-filter:blur(3px); }
+    #overlay.show { display:flex; }
+    .spinner { width:38px; height:38px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #overlay .msg { font-size:.86rem; color:var(--text-muted); font-weight:600; }
+    #bar { width:200px; height:6px; background:var(--bg-subtle); border-radius:4px; overflow:hidden; display:none; }
+    #bar.show { display:block; }
+    #barfill { height:100%; width:0; background:var(--accent); transition:width .1s linear; }
+
+    footer { padding:1.25rem 2rem; font-size:.77rem; color:var(--text-faint); border-top:1px solid var(--border); text-align:center; }
+    footer a { color:var(--text-muted); text-decoration:none; } footer a:hover { color:var(--accent); }
+    @media (max-width:560px){ header{padding:0 1.25rem;} main{padding:2rem 1.25rem 7rem;} .row2{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">APK Editor</a>
+    <div class="header-nav">
+      <a href="https://github.com/flipphoneguy/apk-editor" target="_blank" rel="noopener">Source ↗</a>
+      <button class="theme-btn" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div id="banner"></div>
+
+    <!-- STATE 1: upload -->
+    <section id="state-upload">
+      <h1 class="title">APK Manifest Editor</h1>
+      <p class="subtitle">Upload an APK and edit its <b>package name, version, permissions, activities</b> and other manifest settings through a simple form — no raw files or XML to touch. Download a re-signed copy when you're done.</p>
+
+      <label id="dropzone" for="apkInput">
+        <input type="file" id="apkInput" accept=".apk,application/vnd.android.package-archive" hidden>
+        <div class="dz-icon">⬆️</div>
+        <div class="dz-main">Drop an APK here, or click to choose</div>
+        <div class="dz-sub">.apk · up to 200 MB</div>
+      </label>
+
+      <div class="howto"><span>1 Upload</span><span>→</span><span>2 Edit in a form</span><span>→</span><span>3 Download</span></div>
+
+      <div class="blurb">
+        <p><b>What it can do:</b> change the package name, version, min/target SDK, app flags, permissions and activities — through a friendly interface, without unpacking the whole app (so it's fast).</p>
+        <p><b>What it can't do:</b> change app code, resources, icons, or layouts. A package-name change rewrites the manifest only (not <code>resources.arsc</code>), so it works for many apps but isn't a guaranteed full clone.</p>
+        <p><b>Re-signing:</b> the edited APK is re-signed with a stable key, so it installs as a separate or replacement app and won't receive Play Store / original-signature updates. Re-editing the same app later produces a matching signature, so it can update over your previous edit.</p>
+        <p class="priv">Uploads are processed on the server and auto-deleted within 30 minutes — or immediately after you download.</p>
+      </div>
+
+      <p class="source-link"><a href="https://github.com/flipphoneguy/apk-editor" target="_blank" rel="noopener">⟨ ⟩ Source code on GitHub ↗</a></p>
+    </section>
+
+    <!-- STATE 2: editor -->
+    <section id="state-editor" hidden>
+      <h1 class="title">Editing <span class="fn" id="editFilename"></span></h1>
+      <p class="subtitle" id="editPkg"></p>
+
+      <details class="section" open>
+        <summary>App identity</summary>
+        <div class="section-body">
+          <div class="field">
+            <label>Package name <span class="help" data-tip="The app's unique ID, like com.whatsapp. Change it to install a second copy alongside the original. Rules: letters, digits and underscores only, no spaces, at least one dot, and each part must start with a letter. Note: this rewrites the manifest only, so it works for many apps but isn't a guaranteed full clone.">?</span></label>
+            <input type="text" id="f-package" spellcheck="false" autocapitalize="off">
+            <div class="err" id="err-f-package"></div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Version code <span class="help" data-tip="The internal whole number Android uses to compare versions — a higher number means newer. To update over a previous install, use a higher number than before. Digits only.">?</span></label>
+              <input type="text" id="f-versionCode" inputmode="numeric">
+              <div class="err" id="err-f-versionCode"></div>
+            </div>
+            <div class="field">
+              <label>Version name <span class="help" data-tip="The version text shown to users, e.g. 1.2.3. Any text is allowed — it's just a label.">?</span></label>
+              <input type="text" id="f-versionName">
+            </div>
+          </div>
+          <div class="field" id="labelField">
+            <label>App label <span class="help" data-tip="The display name shown under the icon. Editable only when it's plain text; if it points to a string resource (@string/...) it lives outside the manifest and can't be changed here.">?</span></label>
+            <input type="text" id="f-label">
+            <div class="note" id="labelNote" hidden></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="section">
+        <summary>SDK versions</summary>
+        <div class="section-body">
+          <div class="row2">
+            <div class="field">
+              <label>Min SDK <span class="help" data-tip="The lowest Android version the app will install on, given as an API level. Lowering it lets the APK install on older phones (the app may still crash if it actually uses newer features).">?</span></label>
+              <input type="text" id="f-minSdkVersion" inputmode="numeric">
+              <div class="note" id="hint-minSdkVersion"></div>
+              <div class="err" id="err-f-minSdkVersion"></div>
+            </div>
+            <div class="field">
+              <label>Target SDK <span class="help" data-tip="The Android version the app is built to target, as an API level. Affects some runtime behaviours and the permission model.">?</span></label>
+              <input type="text" id="f-targetSdkVersion" inputmode="numeric">
+              <div class="note" id="hint-targetSdkVersion"></div>
+              <div class="err" id="err-f-targetSdkVersion"></div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="section">
+        <summary>Flags</summary>
+        <div class="section-body">
+          <div id="flagsList"></div>
+          <p class="note">Tick to turn on, untick to turn off. Flags you don't touch are left exactly as they were.</p>
+        </div>
+      </details>
+
+      <details class="section">
+        <summary>Permissions <span class="badge" id="permCount">0</span></summary>
+        <div class="section-body">
+          <div class="list" id="permList"></div>
+          <div class="add-row">
+            <input type="text" id="permAdd" list="permSuggest" placeholder="android.permission.INTERNET" spellcheck="false" autocapitalize="off">
+            <button class="btn small-add" id="permAddBtn" type="button">＋ Add</button>
+          </div>
+          <div class="err" id="err-perm"></div>
+          <datalist id="permSuggest">
+            <option value="android.permission.INTERNET">
+            <option value="android.permission.ACCESS_NETWORK_STATE">
+            <option value="android.permission.ACCESS_WIFI_STATE">
+            <option value="android.permission.WRITE_EXTERNAL_STORAGE">
+            <option value="android.permission.READ_EXTERNAL_STORAGE">
+            <option value="android.permission.CAMERA">
+            <option value="android.permission.RECORD_AUDIO">
+            <option value="android.permission.ACCESS_FINE_LOCATION">
+            <option value="android.permission.ACCESS_COARSE_LOCATION">
+            <option value="android.permission.READ_CONTACTS">
+            <option value="android.permission.POST_NOTIFICATIONS">
+            <option value="android.permission.BLUETOOTH">
+            <option value="android.permission.VIBRATE">
+            <option value="android.permission.WAKE_LOCK">
+            <option value="android.permission.FOREGROUND_SERVICE">
+            <option value="android.permission.RECEIVE_BOOT_COMPLETED">
+          </datalist>
+        </div>
+      </details>
+
+      <details class="section">
+        <summary>Activities <span class="badge" id="actCount">0</span></summary>
+        <div class="section-body">
+          <div class="hint">
+            <b>exported</b> = other apps and the system are allowed to start this screen.
+            <b>launchable</b> = give it its own home-screen icon (adds a MAIN/LAUNCHER entry, and turns on exported so the launcher can open it).
+            Android permits several launchable activities — each becomes a separate icon — but you usually want just one.
+          </div>
+          <div class="list" id="actList"></div>
+          <p class="note">Untick to change a setting, or remove an activity entirely. Removed activities won't exist in the rebuilt app.</p>
+        </div>
+      </details>
+
+      <details class="section">
+        <summary>Signing options</summary>
+        <div class="section-body">
+          <div class="field">
+            <label style="font-size:.85rem;color:var(--text)"><input type="radio" name="sign" id="signDefault" value="default" checked style="width:auto;margin-right:.4rem"> Use the default server key (fastest)</label>
+            <p class="note" style="margin:.3rem 0 .6rem 1.4rem">The same key is used every time, so editing this app again later (same package name, higher version code) installs as an update on your device.</p>
+            <label style="font-size:.85rem;color:var(--text)"><input type="radio" name="sign" value="user" style="width:auto;margin-right:.4rem"> Upload my own keystore</label>
+          </div>
+          <div id="ksFields" hidden>
+            <div class="field">
+              <label>Keystore file (.jks / .keystore)</label>
+              <input type="file" id="ksFile" style="font-size:.8rem">
+            </div>
+            <div class="row2">
+              <div class="field"><label>Store password</label><input type="password" id="ksPass"></div>
+              <div class="field"><label>Key password <span class="help" data-tip="Leave blank if it's the same as the store password.">?</span></label><input type="password" id="keyPass"></div>
+            </div>
+            <div class="field"><label>Key alias <span class="help" data-tip="Leave blank to use the first key in the store.">?</span></label><input type="text" id="ksAlias" placeholder="(optional)"></div>
+          </div>
+        </div>
+      </details>
+
+      <div class="actionbar">
+        <button class="btn primary" id="btnBuild" type="button">Build &amp; Sign</button>
+        <button class="btn" id="btnRevert" type="button">Revert to original</button>
+        <button class="btn ghost" id="btnCancel" type="button">Cancel</button>
+      </div>
+    </section>
+
+    <!-- STATE 3: result -->
+    <section id="state-result" hidden>
+      <div class="result-card">
+        <div class="check">✓</div>
+        <h2>Done <span class="elapsed" id="elapsed"></span></h2>
+        <p class="rname" id="resultName"></p>
+        <p class="verified">Signed &amp; verified with apksigner</p>
+        <div id="warnings"></div>
+        <div class="result-actions">
+          <a class="btn primary" id="btnDownload" download>⬇ Download APK</a>
+          <button class="btn" id="btnAnother" type="button">Edit another</button>
+        </div>
+        <p class="priv">This file auto-deletes the moment you download it (and within 30 min regardless).</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>APK Editor — <a href="https://github.com/flipphoneguy/apk-editor" target="_blank" rel="noopener">open source (GPLv3)</a> · <a href="https://tools.flipphoneguy.duckdns.org/apkeditor" target="_blank" rel="noopener">live demo</a></footer>
+
+  <div id="overlay"><div class="spinner"></div><div id="bar"><div id="barfill"></div></div><div class="msg" id="overlayMsg">Working…</div></div>
+
+  <script>
+    var TOKEN = null, ORIGINAL = null, state = null, dirty = false;
+    // Warn before leaving/reloading while an uploaded APK is being edited.
+    window.addEventListener('beforeunload', function(e){ if(dirty){ e.preventDefault(); e.returnValue=''; } });
+    function $(id){ return document.getElementById(id); }
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+    function clone(o){ return JSON.parse(JSON.stringify(o)); }
+    function showState(name){ ['upload','editor','result'].forEach(function(s){ $('state-'+s).hidden = (s!==name); }); window.scrollTo(0,0); }
+    function overlay(on,msg,pct){ $('overlayMsg').textContent = msg||'Working…'; $('overlay').classList.toggle('show',!!on);
+      var bar=$('bar'); if(pct==null){ bar.classList.remove('show'); } else { bar.classList.add('show'); $('barfill').style.width=pct+'%'; } }
+    function banner(msg){ var b=$('banner'); if(!msg){ b.classList.remove('show'); return; } b.textContent=msg; b.classList.add('show'); window.scrollTo(0,0); }
+
+    /* theme */
+    $('themeToggle').addEventListener('click',function(){ var h=document.documentElement; var n=h.getAttribute('data-theme')==='dark'?'light':'dark'; h.setAttribute('data-theme',n); localStorage.setItem('theme',n); });
+
+    /* ---- click/tap tooltips ---- */
+    var tip=document.createElement('div'); tip.id='tip'; document.body.appendChild(tip); var tipFor=null;
+    function showTip(el){ tip.textContent=el.getAttribute('data-tip')||''; tip.style.display='block';
+      var r=el.getBoundingClientRect(); tip.style.top=(r.bottom+window.scrollY+6)+'px'; tip.style.left='0px';
+      var w=tip.offsetWidth, max=window.scrollX+document.documentElement.clientWidth-w-12, left=r.left+window.scrollX;
+      if(left>max) left=max; if(left<window.scrollX+8) left=window.scrollX+8; tip.style.left=left+'px'; tipFor=el; }
+    function hideTip(){ tip.style.display='none'; tipFor=null; }
+    document.addEventListener('click',function(e){
+      var h=e.target.closest ? e.target.closest('.help') : null;
+      if(h){ e.preventDefault(); e.stopPropagation(); if(tipFor===h){ hideTip(); } else { showTip(h); } return; }
+      if(!(e.target.closest && e.target.closest('#tip'))) hideTip();
+    });
+    window.addEventListener('scroll',hideTip,true);
+
+    /* ---- Android API level → version map ---- */
+    var ANDROID={1:'1.0',2:'1.1',3:'1.5 Cupcake',4:'1.6 Donut',5:'2.0 Eclair',6:'2.0.1 Eclair',7:'2.1 Eclair',8:'2.2 Froyo',9:'2.3 Gingerbread',10:'2.3.3 Gingerbread',11:'3.0 Honeycomb',12:'3.1 Honeycomb',13:'3.2 Honeycomb',14:'4.0 Ice Cream Sandwich',15:'4.0.3 Ice Cream Sandwich',16:'4.1 Jelly Bean',17:'4.2 Jelly Bean',18:'4.3 Jelly Bean',19:'4.4 KitKat',20:'4.4W KitKat',21:'5.0 Lollipop',22:'5.1 Lollipop',23:'6.0 Marshmallow',24:'7.0 Nougat',25:'7.1 Nougat',26:'8.0 Oreo',27:'8.1 Oreo',28:'9 Pie',29:'10',30:'11',31:'12',32:'12L',33:'13',34:'14',35:'15',36:'16'};
+    function sdkHint(v){ v=(v||'').trim(); if(!v) return ''; if(!/^\d+$/.test(v)) return ''; var n=+v; var a=ANDROID[n]; return a? ('API '+n+' · Android '+a) : ('API '+n); }
+    function wireSdkHint(id){ var inp=$('f-'+id), hint=$('hint-'+id); function upd(){ hint.textContent=sdkHint(inp.value); } inp.addEventListener('input',upd); return upd; }
+
+    /* ---- upload (XHR for real progress) ---- */
+    var dz=$('dropzone'), input=$('apkInput');
+    ['dragenter','dragover'].forEach(function(e){ dz.addEventListener(e,function(ev){ ev.preventDefault(); dz.classList.add('drag'); }); });
+    ['dragleave','drop'].forEach(function(e){ dz.addEventListener(e,function(ev){ ev.preventDefault(); dz.classList.remove('drag'); }); });
+    dz.addEventListener('drop',function(ev){ var f=ev.dataTransfer.files[0]; if(f) uploadFile(f); });
+    input.addEventListener('change',function(){ if(input.files[0]) uploadFile(input.files[0]); });
+
+    function uploadFile(file){
+      banner('');
+      if(!/\.apk$/i.test(file.name)){ banner('Please choose a .apk file.'); return; }
+      if(file.size > 200*1024*1024){ banner('That APK is over the 200 MB limit.'); return; }
+      var xhr=new XMLHttpRequest();
+      xhr.open('POST','/apkeditor/upload');
+      overlay(true,'Uploading… 0%',0);
+      xhr.upload.onprogress=function(e){ if(e.lengthComputable){ var pct=Math.round(e.loaded/e.total*100); overlay(true,'Uploading… '+pct+'%',pct); } };
+      xhr.upload.onload=function(){ overlay(true,'Reading manifest…'); };
+      xhr.onload=function(){ overlay(false); var j; try{ j=JSON.parse(xhr.responseText); }catch(_){ banner('Upload failed (bad server response).'); return; }
+        if(xhr.status!==200){ banner(j.error||'Upload failed.'); return; }
+        TOKEN=j.token; ORIGINAL=j.model; state=clone(j.model); dirty=true; $('editFilename').textContent=j.filename; renderEditor(); showState('editor'); };
+      xhr.onerror=function(){ overlay(false); banner('Network error during upload.'); };
+      var fd=new FormData(); fd.append('apk',file); xhr.send(fd);
+    }
+
+    /* ---- render editor ---- */
+    function renderEditor(){
+      clearErrors();
+      $('editPkg').textContent = state.package ? ('Original package: '+state.package) : '';
+      $('f-package').value = state.package||'';
+      $('f-versionCode').value = state.versionCode||'';
+      $('f-versionName').value = state.versionName||'';
+      $('f-minSdkVersion').value = state.minSdkVersion||'';
+      $('f-targetSdkVersion').value = state.targetSdkVersion||'';
+      updMinHint(); updTgtHint();
+
+      var lab=state.label||{}, li=$('f-label'), ln=$('labelNote');
+      li.value = lab.value||'';
+      if(lab.editable){ li.disabled=false; ln.hidden=true; }
+      else { li.disabled=true; ln.hidden=false; ln.textContent = lab.value? ('This label points to a resource ('+lab.value+') and can’t be changed here.') : 'No editable label on this app.'; }
+
+      renderFlags(); renderPerms(); renderActs();
+    }
+
+    var FLAG_TIPS={
+      debuggable:"Lets you attach a debugger and use adb run-as. Handy for testing; normally off for release builds.",
+      allowBackup:"Whether Android may include the app's data in backups and restore it.",
+      usesCleartextTraffic:"Allow plain, non-HTTPS (http://) network traffic. Some apps need this.",
+      extractNativeLibs:"Whether bundled native (.so) libraries are extracted to storage at install time.",
+      largeHeap:"Ask Android for a larger memory limit for the app."
+    };
+    function renderFlags(){
+      var box=$('flagsList'); box.innerHTML='';
+      Object.keys(state.flags||{}).forEach(function(k){
+        var on = state.flags[k]===true;
+        var row=document.createElement('label'); row.className='checkrow';
+        row.innerHTML='<input type="checkbox" data-flag="'+esc(k)+'"'+(on?' checked':'')+'><span class="cname">'+esc(k)+'</span>'+
+          '<span class="help" data-tip="'+esc(FLAG_TIPS[k]||k)+'">?</span>';
+        box.appendChild(row);
+      });
+    }
+
+    function renderPerms(){
+      var list=$('permList'); list.innerHTML='';
+      $('permCount').textContent=state.permissions.length;
+      state.permissions.forEach(function(p,i){
+        var row=document.createElement('div'); row.className='lrow';
+        row.innerHTML='<span class="lname" title="'+esc(p)+'">'+esc(p)+'</span><button class="icon-btn" title="Remove">🗑</button>';
+        row.querySelector('button').addEventListener('click',function(){ state.permissions.splice(i,1); renderPerms(); });
+        list.appendChild(row);
+      });
+    }
+    function permErr(msg){ var e=$('err-perm'), inp=$('permAdd');
+      if(msg){ e.textContent=msg; e.classList.add('show'); inp.classList.add('invalid'); }
+      else { e.textContent=''; e.classList.remove('show'); inp.classList.remove('invalid'); } }
+    function addPerm(){
+      var inp=$('permAdd'); var v=inp.value.trim(); if(!v) return;
+      if(/\s/.test(v)){ permErr('Permission names can’t contain spaces.'); return; }
+      if(!/^[a-zA-Z][\w.]*\.[A-Za-z0-9_]+$/.test(v)){ permErr('That doesn’t look like a permission name (e.g. android.permission.CAMERA).'); return; }
+      permErr('');
+      if(state.permissions.indexOf(v)===-1){ state.permissions.push(v); state.permissions.sort(); renderPerms(); }
+      inp.value='';
+    }
+    $('permAddBtn').addEventListener('click',addPerm);
+    $('permAdd').addEventListener('input',function(){ permErr(''); });
+    $('permAdd').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); addPerm(); } });
+
+    function renderActs(){
+      var list=$('actList'); list.innerHTML='';
+      $('actCount').textContent=state.activities.length;
+      state.activities.forEach(function(a,i){
+        var row=document.createElement('div'); row.className='act';
+        row.innerHTML =
+          '<div class="act-top"><span class="act-name" title="'+esc(a.name)+'">'+esc(a.name)+'</span>'+
+            (a.launchable?'<span class="pill">launcher</span>':'')+
+            '<button class="icon-btn" title="Remove activity">🗑</button></div>'+
+          '<div class="act-ctrls">'+
+            '<label><input type="checkbox" data-i="'+i+'" data-k="exported"'+(a.exported===true?' checked':'')+'> exported</label>'+
+            '<label><input type="checkbox" data-i="'+i+'" data-k="launchable"'+(a.launchable?' checked':'')+'> launchable</label>'+
+          '</div>';
+        row.querySelector('button').addEventListener('click',function(){ state.activities.splice(i,1); renderActs(); });
+        list.appendChild(row);
+      });
+      list.querySelectorAll('input[data-k=exported]').forEach(function(c){ c.addEventListener('change',function(){ state.activities[+c.getAttribute('data-i')].exported=c.checked; }); });
+      list.querySelectorAll('input[data-k=launchable]').forEach(function(c){ c.addEventListener('change',function(){ state.activities[+c.getAttribute('data-i')].launchable=c.checked; renderActs(); }); });
+    }
+
+    var updMinHint=wireSdkHint('minSdkVersion'), updTgtHint=wireSdkHint('targetSdkVersion');
+
+    /* signing radios */
+    document.querySelectorAll('input[name=sign]').forEach(function(r){ r.addEventListener('change',function(){ $('ksFields').hidden = $('signDefault').checked; }); });
+
+    /* revert / cancel */
+    $('btnRevert').addEventListener('click',function(){ state=clone(ORIGINAL); renderEditor(); banner(''); });
+    $('btnCancel').addEventListener('click',function(){
+      if(TOKEN) fetch('/apkeditor/cancel/'+TOKEN,{method:'POST'});
+      TOKEN=null; ORIGINAL=null; state=null; dirty=false; input.value=''; banner(''); showState('upload');
+    });
+
+    /* ---- validation ---- */
+    function setErr(id,msg){ var inp=$('f-'+id), box=$('err-f-'+id); if(inp) inp.classList.add('invalid'); if(box){ box.textContent=msg; box.classList.add('show'); }
+      var d=inp&&inp.closest('details.section'); if(d) d.open=true; }
+    function clearErrors(){ document.querySelectorAll('.field input.invalid').forEach(function(i){ i.classList.remove('invalid'); });
+      document.querySelectorAll('.field .err.show').forEach(function(e){ e.classList.remove('show'); e.textContent=''; }); }
+    function validate(){
+      clearErrors(); var first=null;
+      function bad(id,msg){ setErr(id,msg); if(!first) first=$('f-'+id); }
+      var pkg=$('f-package').value.trim();
+      if(!pkg) bad('package','Package name is required.');
+      else if(/\s/.test(pkg)) bad('package','No spaces allowed in a package name.');
+      else if(!/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(pkg)) bad('package','Use a format like com.example.app — letters, digits and underscores only, at least one dot, each part starting with a letter.');
+      var vc=$('f-versionCode').value.trim();
+      if(vc && !/^\d+$/.test(vc)) bad('versionCode','Version code must be a whole number (digits only, no letters or spaces).');
+      ['minSdkVersion','targetSdkVersion'].forEach(function(k){
+        var v=$('f-'+k).value.trim(); if(!v) return;
+        if(!/^\d+$/.test(v)) bad(k,(k==='minSdkVersion'?'Min':'Target')+' SDK must be a whole number (an API level like 21).');
+        else if(+v<1||+v>40) bad(k,'That API level looks out of range (expected 1–40).');
+      });
+      if(first){ first.scrollIntoView({behavior:'smooth',block:'center'}); first.focus({preventScroll:true}); }
+      return !first;
+    }
+
+    function tri(cur,orig){ return (cur === (orig===true)) ? orig : cur; }
+
+    /* ---- build ---- */
+    $('btnBuild').addEventListener('click',function(){
+      banner('');
+      if(!validate()){ banner('Please fix the highlighted fields below.'); return; }
+
+      var edits={};
+      edits.package=$('f-package').value.trim();
+      edits.versionCode=$('f-versionCode').value.trim();
+      edits.versionName=$('f-versionName').value.trim();
+      edits.minSdkVersion=$('f-minSdkVersion').value.trim();
+      edits.targetSdkVersion=$('f-targetSdkVersion').value.trim();
+      edits.label = (state.label && state.label.editable) ? {editable:true, value:$('f-label').value} : state.label;
+
+      // flags: checkbox vs original (leave unchanged ones untouched)
+      edits.flags={};
+      document.querySelectorAll('#flagsList input[type=checkbox]').forEach(function(c){
+        var k=c.getAttribute('data-flag'); edits.flags[k]=tri(c.checked, ORIGINAL.flags[k]);
+      });
+
+      // permissions: current desired set
+      edits.permissions=state.permissions.slice();
+
+      // activities: current order; exported diffed against original by name
+      var origByName={}; (ORIGINAL.activities||[]).forEach(function(a){ origByName[a.name]=a; });
+      edits.activities=state.activities.map(function(a){
+        var o=origByName[a.name];
+        return { name:a.name, exported:tri(a.exported===true, o?o.exported:null), launchable:!!a.launchable };
+      });
+
+      var fd=new FormData();
+      fd.append('token',TOKEN);
+      fd.append('model',JSON.stringify(edits));
+      if(document.querySelector('input[name=sign]:checked').value==='user'){
+        var kf=$('ksFile').files[0];
+        if(!kf){ banner('Choose a keystore file, or switch to the default key.'); return; }
+        fd.append('keystore',kf); fd.append('ks_pass',$('ksPass').value);
+        fd.append('key_pass',$('keyPass').value); fd.append('ks_alias',$('ksAlias').value.trim());
+      }
+      overlay(true,'Building & signing…');
+      fetch('/apkeditor/build',{method:'POST',body:fd}).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+        .then(function(res){ overlay(false); if(!res.ok){ banner(res.j.error||'Build failed.'); return; } showResult(res.j); })
+        .catch(function(){ overlay(false); banner('Network error during build.'); });
+    });
+
+    function showResult(j){
+      $('elapsed').textContent = j.elapsed!=null ? ('in '+j.elapsed+'s') : '';
+      $('resultName').textContent = j.filename+'  ·  '+fmtSize(j.size);
+      $('btnDownload').setAttribute('href',j.download);
+      var w=$('warnings'); w.innerHTML='';
+      if(j.warnings && j.warnings.length){ w.innerHTML='<div class="warnbox"><b>Heads up:</b><ul>'+j.warnings.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>'; }
+      showState('result');
+    }
+    function fmtSize(b){ if(b==null) return ''; if(b<1048576) return (b/1024).toFixed(0)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+
+    $('btnDownload').addEventListener('click',function(){ dirty=false; setTimeout(function(){ TOKEN=null; },500); });
+    $('btnAnother').addEventListener('click',function(){ TOKEN=null; ORIGINAL=null; state=null; dirty=false; input.value=''; banner(''); showState('upload'); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Example systemd unit. Copy to /etc/systemd/system/apk-editor.service,
+# fill in the secrets, then: systemctl daemon-reload && systemctl enable --now apk-editor
+[Unit]
+Description=APK Editor (gunicorn)
+After=network.target
+
+[Service]
+# Generate a secret:  python3 -c "import secrets; print(secrets.token_hex(32))"
+Environment="SECRET_KEY=CHANGE_ME"
+Environment="KEYSTORE_PASSWORD=CHANGE_ME"
+Environment="KEY_ALIAS=apkeditor"
+# Where uploads, jobs and the generated signing keystore live (persist this!)
+Environment="UPLOAD_FOLDER=/var/lib/apk-editor"
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/apk-editor
+# /usr/bin is needed for zipalign, apksigner and keytool
+Environment="PATH=/opt/apk-editor/venv/bin:/usr/bin:/bin"
+# --timeout 120 so signing a large APK isn't killed by the default 30s limit
+ExecStart=/opt/apk-editor/venv/bin/gunicorn --workers 3 --timeout 120 --bind 127.0.0.1:5003 wsgi:app
+
+[Install]
+WantedBy=multi-user.target
