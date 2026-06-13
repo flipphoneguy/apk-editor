@@ -147,10 +147,56 @@ def _apply_launchable(act, want):
                 act.remove(intf)
 
 
+# Component elements whose android:name is resolved relative to the manifest
+# package (an Android `ComponentName`).
+_COMPONENT_TAGS = ("activity", "activity-alias", "service", "receiver", "provider")
+
+
+def _abs_class(old_pkg, name):
+    """Expand a relative component/class name against the original package.
+
+    Android resolves ".Foo" as <pkg>.Foo and a bare "Foo" as <pkg>.Foo. If the
+    package is renamed, those relative names would re-resolve against the *new*
+    package and point at classes that don't exist (crash on launch). Anchoring
+    them to the original package keeps them pointing at the real bytecode.
+    """
+    if not name or not old_pkg:
+        return name
+    if name.startswith("."):
+        return old_pkg + name
+    if "." not in name:
+        return old_pkg + "." + name
+    return name
+
+
+def _absolutize_components(root, old_pkg):
+    """Rewrite relative class names to absolute (used when the package changes)."""
+    app = root.find("application")
+    if app is None:
+        return
+    name_key = _a("name")
+    target_key = _a("targetActivity")
+
+    app_name = app.get(name_key)
+    if app_name is not None:
+        app.set(name_key, _abs_class(old_pkg, app_name))
+
+    for tag in _COMPONENT_TAGS:
+        for el in app.findall(tag):
+            nm = el.get(name_key)
+            if nm is not None:
+                el.set(name_key, _abs_class(old_pkg, nm))
+            ta = el.get(target_key)
+            if ta is not None:
+                el.set(target_key, _abs_class(old_pkg, ta))
+
+
 def apply_model(root, edits):
     """Mutate the lxml tree toward the desired-state `edits` model."""
-    if edits.get("package"):
-        root.set("package", str(edits["package"]).strip())
+    old_pkg = root.get("package")
+    new_pkg = str(edits["package"]).strip() if edits.get("package") else None
+    if new_pkg:
+        root.set("package", new_pkg)
 
     _set_or_remove(root, "versionCode", edits.get("versionCode"))
     _set_or_remove(root, "versionName", edits.get("versionName"))
@@ -199,6 +245,11 @@ def apply_model(root, edits):
             spec = desired[nm]
             _set_bool(act, "exported", spec.get("exported"))
             _apply_launchable(act, bool(spec.get("launchable")))
+
+    # A package rename re-anchors relative component names; expand them to the
+    # original package so they keep pointing at the real (unchanged) bytecode.
+    if new_pkg and new_pkg != old_pkg:
+        _absolutize_components(root, old_pkg)
 
     return root
 

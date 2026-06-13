@@ -11,6 +11,25 @@ It does not unpack the whole APK. It reads the single binary
 it back into the archive, then zipaligns and signs. Most edits take a couple of
 seconds.
 
+## Android app
+
+A companion Android app (source in [`app/`](app/)) is a thin native client for
+the same hosted backend — it does the picking, editing and saving on-device and
+offloads the manifest rebuild + signing to the live server, so the phone never
+needs `aapt`, a JDK, or the editing engine itself.
+
+- Pick an APK with the system file picker, edit the manifest through a native
+  form (package, version, SDK, flags, permissions, activities, signing — with
+  per-field help), and save the re-signed copy back to storage.
+- Touchscreen **and** d-pad / TV-remote friendly.
+- Requests storage access on launch where it applies (older Android); on
+  Android 13+ the system picker handles file access with no extra permission.
+
+The app is **distributed as a prebuilt APK on the
+[Releases](https://github.com/flipphoneguy/apk-editor/releases) page** — it is
+not committed to the repo. It builds entirely on-device in Termux (no Gradle, no
+Android Studio); see [`app/build.sh`](app/build.sh).
+
 ## Features
 
 - Edit package id, version code/name, min/target SDK, app flags (`debuggable`,
@@ -44,9 +63,11 @@ Can't: change anything outside the manifest (code, resources, icons, layouts).
 Some specifics:
 
 - A package rename rewrites the manifest only, not `resources.arsc` or bytecode.
-  It lets many apps install alongside the original but is not a guaranteed full
-  clone. Apps that use their package id at runtime (FileProvider authorities,
-  account types, hardcoded `APPLICATION_ID`, and so on) may break.
+  Relative component names (`.MainActivity`, providers, receivers, ...) are
+  re-anchored to the original package so the renamed app still launches, but it
+  is not a guaranteed full clone: apps that use their package id at runtime
+  (FileProvider authorities, account types, hardcoded `APPLICATION_ID`, and so
+  on) may still break.
 - An app label that points to a string resource (`@string/...`) can't be changed
   here; only literal labels can.
 - Re-signing changes the signature, so an edited APK installs as a separate or

@@ -1,0 +1,8 @@
+{
+    "package": "com.flipphoneguy.apkeditor",
+    "name": "APK Editor",
+    "min_sdk": 23,
+    "target_sdk": 35,
+    "repo": "flipphoneguy/apk-editor",
+    "github_profile": "https://github.com/flipphoneguy"
+}

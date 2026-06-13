@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">APK Editor</string>
+    <string name="btn_info">ⓘ</string>
+
+    <!-- Permission gate -->
+    <string name="perm_title">Storage access</string>
+    <string name="perm_body">APK Editor needs to read the APK you pick and save the
+        signed copy back to your device. On this Android version it uses the
+        system file picker, so you can grant access there per file.</string>
+    <string name="perm_body_legacy">APK Editor needs storage access to read the APK
+        you pick and to save the signed copy back to your device.</string>
+    <string name="perm_grant">Grant access</string>
+    <string name="perm_continue">Continue</string>
+    <string name="perm_open_settings">Open app settings</string>
+    <string name="perm_skip">Skip — I\'ll use the system picker</string>
+
+    <!-- Upload screen -->
+    <string name="upload_title">APK Manifest Editor</string>
+    <string name="upload_subtitle">Pick an APK and edit its package name, version,
+        permissions, activities and other manifest settings through a simple form.
+        Download a re-signed copy when you\'re done.</string>
+    <string name="btn_pick_apk">Choose an APK</string>
+    <string name="upload_steps">1 Pick → 2 Edit → 3 Save</string>
+    <string name="upload_blurb"><![CDATA[<b>Can do:</b> change package name, version, min/target SDK, app flags, permissions and activities — without unpacking the whole app, so it\'s fast.<br/><br/><b>Can\'t do:</b> change app code, resources, icons or layouts. A package-name change rewrites the manifest only (not resources.arsc), so it works for many apps but isn\'t a guaranteed full clone.<br/><br/><b>Re-signing:</b> the edited APK is re-signed with a stable key, so it installs as a separate or replacement app and won\'t receive Play Store updates. Re-editing the same app later produces a matching signature.<br/><br/>Uploads are processed on the live backend and auto-delete within 30 minutes — or immediately after you save.]]></string>
+
+    <!-- Editor sections -->
+    <string name="sec_identity">App identity</string>
+    <string name="sec_sdk">SDK versions</string>
+    <string name="sec_flags">Flags</string>
+    <string name="sec_perms">Permissions</string>
+    <string name="sec_acts">Activities</string>
+    <string name="sec_signing">Signing options</string>
+
+    <string name="help">Help</string>
+    <string name="tip_package">The app\'s unique ID, like com.whatsapp. Change it to install a
+        second copy alongside the original. Rules: letters, digits and underscores only, no
+        spaces, at least one dot, each part starting with a letter. This rewrites the manifest
+        only (and re-anchors the app\'s components to the original package), so it works for
+        many apps but isn\'t a guaranteed full clone.</string>
+    <string name="tip_version_code">The internal whole number Android uses to compare versions —
+        higher means newer. To update over a previous install, use a higher number than before.
+        Digits only.</string>
+    <string name="tip_version_name">The version text shown to users, e.g. 1.2.3. Any text is
+        allowed — it\'s just a label.</string>
+    <string name="tip_label">The display name shown under the icon. Editable only when it\'s plain
+        text; if it points to a string resource (@string/…) it lives outside the manifest and
+        can\'t be changed here.</string>
+    <string name="tip_min_sdk">The lowest Android version the app will install on, as an API level.
+        Lowering it lets the APK install on older phones (the app may still crash if it actually
+        uses newer features).</string>
+    <string name="tip_target_sdk">The Android version the app is built to target, as an API level.
+        Affects some runtime behaviours and the permission model.</string>
+    <string name="tip_key_pass">Leave blank if it\'s the same as the store password.</string>
+    <string name="tip_alias">Leave blank to use the first key in the store.</string>
+
+    <string name="tip_debuggable">Lets you attach a debugger and use adb run-as. Handy for testing;
+        normally off for release builds.</string>
+    <string name="tip_allowBackup">Whether Android may include the app\'s data in backups and
+        restore it.</string>
+    <string name="tip_usesCleartextTraffic">Allow plain, non-HTTPS (http://) network traffic.
+        Some apps need this.</string>
+    <string name="tip_extractNativeLibs">Whether bundled native (.so) libraries are extracted to
+        storage at install time.</string>
+    <string name="tip_largeHeap">Ask Android for a larger memory limit for the app.</string>
+
+    <string name="lbl_package">Package name</string>
+    <string name="lbl_version_code">Version code</string>
+    <string name="lbl_version_name">Version name</string>
+    <string name="lbl_label">App label</string>
+    <string name="lbl_min_sdk">Min SDK</string>
+    <string name="lbl_target_sdk">Target SDK</string>
+
+    <string name="flags_note">Tick to turn on, untick to turn off. Flags you don\'t
+        touch are left exactly as they were. Press left/right on a row to toggle.</string>
+    <string name="perm_add_hint">android.permission.INTERNET</string>
+    <string name="btn_add">Add</string>
+    <string name="acts_hint"><![CDATA[<b>exported</b> = other apps and the system may start this screen. <b>launchable</b> = give it a home-screen icon (adds a MAIN/LAUNCHER entry and turns on exported). Untick to change a setting, or remove an activity entirely.]]></string>
+    <string name="acts_note">Removed activities won\'t exist in the rebuilt app.</string>
+    <string name="pill_launcher">launcher</string>
+    <string name="ck_exported">exported</string>
+    <string name="ck_launchable">launchable</string>
+    <string name="btn_remove">Remove</string>
+
+    <string name="sign_default">Use the default server key (fastest)</string>
+    <string name="sign_default_note">The same key is used every time, so editing this
+        app again later (same package, higher version code) installs as an update.</string>
+    <string name="sign_user">Use my own keystore</string>
+    <string name="lbl_keystore">Keystore file (.jks / .keystore)</string>
+    <string name="btn_pick_keystore">Choose keystore file</string>
+    <string name="lbl_store_pass">Store password</string>
+    <string name="lbl_key_pass">Key password (blank = same as store)</string>
+    <string name="lbl_alias">Key alias (blank = first key)</string>
+
+    <string name="btn_build">Build &amp; Sign</string>
+    <string name="btn_revert">Revert to original</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- Result screen -->
+    <string name="result_done">Done</string>
+    <string name="result_verified">Signed &amp; verified with apksigner</string>
+    <string name="btn_save_apk">Save APK</string>
+    <string name="btn_edit_another">Edit another</string>
+    <string name="result_priv">The server copy auto-deletes the moment you save it
+        (and within 30 min regardless).</string>
+    <string name="warn_heads_up">Heads up:</string>
+
+    <!-- Status / overlay -->
+    <string name="ov_uploading">Uploading… %d%%</string>
+    <string name="ov_reading">Reading manifest…</string>
+    <string name="ov_building">Building &amp; signing…</string>
+    <string name="ov_saving">Saving… %d%%</string>
+    <string name="msg_saved">Saved %s</string>
+    <string name="msg_save_failed">Save failed: %s</string>
+    <string name="msg_upload_failed">Upload failed: %s</string>
+    <string name="msg_build_failed">Build failed: %s</string>
+    <string name="msg_pick_keystore">Choose a keystore file, or switch to the default key.</string>
+    <string name="msg_fix_fields">Please fix the highlighted fields.</string>
+
+    <!-- About / update (used by InfoActivity) -->
+    <string name="info_title">About</string>
+    <string name="info_update_title">Update</string>
+    <string name="info_update_body">Check for a newer version on GitHub.</string>
+    <string name="btn_check_update">Check for update</string>
+    <string name="info_links_title">Links</string>
+    <string name="btn_github_profile">GitHub Profile</string>
+    <string name="btn_app_repo">App Repository</string>
+
+    <string name="update_checking">Checking…</string>
+    <string name="update_up_to_date">Already on the latest version (%s)</string>
+    <string name="update_downloading">Downloading v%s…</string>
+    <string name="update_download_failed">Download failed: %s</string>
+    <string name="update_ready">Update ready</string>
+    <string name="update_install_root">Root install</string>
+    <string name="update_install_system">System installer</string>
+    <string name="update_installing">Installing…</string>
+    <string name="update_install_failed">Install failed: %s</string>
+    <string name="update_no_release">No release found</string>
+
+    <string name="info_theme_title">Theme</string>
+    <string name="theme_system">System Default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+</resources>
